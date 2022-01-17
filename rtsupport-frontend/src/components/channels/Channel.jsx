@@ -1,7 +1,7 @@
 import React from 'react'
 
 const Channel = ({ channel, activeChannel, setActiveChannel }) => {
-  const isActive = channel === activeChannel ? 'active' : ''
+  const isActive = channel === activeChannel ? 'active' : 'inactive'
 
   const handleClick = (event) => {
     event.preventDefault()
@@ -10,10 +10,8 @@ const Channel = ({ channel, activeChannel, setActiveChannel }) => {
   }
 
   return (
-    <li className={isActive}>
-      <a onClick={(e) => handleClick(e)}>
-        {channel.name}
-      </a>
+    <li className={isActive} onClick={(e) => handleClick(e)}>
+      {channel.name}
     </li>
   )
 }

@@ -102,6 +102,8 @@ const App = () => {
           users={users}
           addUser={handleAddUser}
         />
+      </div>
+      <div className='content'>
         <MessageSection
           messages={messages}
           activeChannel={activeChannel}

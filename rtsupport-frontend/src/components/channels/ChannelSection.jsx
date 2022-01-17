@@ -10,12 +10,12 @@ const ChannelSection = ({
   addChannel
 }) => {
   return (
-    <div className='support panel panel-primary'>
-      <div className='panel-heading'>
+    <div className='panel-section'>
+      <div>
         <strong>Channels</strong>
       </div>
 
-      <div className='panel-body channels'>
+      <div>
         <ChannelList
           channels={channels}
           activeChannel={activeChannel}

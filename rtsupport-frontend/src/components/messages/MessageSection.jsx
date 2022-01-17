@@ -9,12 +9,12 @@ const MessageSection = ({
   addMessage
 }) => {
   return (
-    <div className='support panel panel-primary'>
-      <div className='panel-heading'>
+    <div className='panel-section'>
+      <div>
         <strong>{activeChannel.name}</strong>
       </div>
 
-      <div className='panel-body messages'>
+      <div>
         <MessageList
           messages={messages}
         />

@@ -7,11 +7,11 @@ const Message = ({ message }) => {
 
   return (
     <li className='message'>
-      <div className='author'>
+      <div>
         <strong>{message.author}</strong>
-        <i className='timestamp'>{createdAt}</i>
+        <i className='message-timestamp'>{createdAt}</i>
       </div>
-      <div className='body'>{message.body}</div>
+      <div>{message.body}</div>
     </li>
   )
 }
