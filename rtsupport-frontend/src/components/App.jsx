@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 import 'bootstrap/dist/css/bootstrap.css'
 import './App.css'
@@ -12,15 +12,20 @@ const App = () => {
   const [activeChannel, setActiveChannel] = useState('')
   const [users, setUsers] = useState([])
   const [messages, setMessages] = useState([])
+  const [connected, setConnected] = useState(false)
+
+  const ws = useRef(null)
 
   const handleAddChannel = (name) => {
-    const newChannel = {
-      id: channels.length,
-      name
+    const message = {
+      name: 'add-channel',
+      data: {
+        id: channels.length,
+        name
+      }
     }
 
-    setChannels(oldState => [...oldState, newChannel])
-    // TODO: send to server
+    ws.current.send(JSON.stringify(message))
   }
 
   const handleSetActiveChannel = (activeChannel) => {
@@ -51,6 +56,38 @@ const App = () => {
     setMessages(oldState => [...oldState, newMessage])
     // TODO: send to server
   }
+
+  const newChannel = (channel) => {
+    setChannels(oldState => [...oldState, channel])
+  }
+
+  const handleOnMessage = (event) => {
+    try {
+      const parsedEvent = JSON.parse(event.data)
+
+      if (parsedEvent.name === 'add-channel') {
+        newChannel(parsedEvent.data)
+      }
+    } catch (err) {}
+  }
+
+  useEffect(() => {
+    ws.current = new WebSocket('ws://localhost:8081')
+
+    ws.current.onopen = (event) => {
+      setConnected(true)
+    }
+
+    ws.current.onmessage = (event) => {
+      handleOnMessage(event)
+    }
+
+    ws.current.onclose = (event) => {
+      setConnected(false)
+    }
+
+    return () => ws.current.close()
+  }, [])
 
   return (
     <div className='app'>
