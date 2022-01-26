@@ -3,7 +3,7 @@ import React from 'react'
 import UserList from './UserList'
 import UserForm from './UserForm'
 
-const UserSection = ({ users, addUser }) => {
+const UserSection = ({ users, editUser }) => {
   return (
     <div className='panel-section'>
       <div>
@@ -12,7 +12,7 @@ const UserSection = ({ users, addUser }) => {
 
       <div>
         <UserList users={users} />
-        <UserForm addUser={addUser} />
+        <UserForm editUser={editUser} />
       </div>
     </div>
   )

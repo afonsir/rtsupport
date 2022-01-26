@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import 'bootstrap/dist/css/bootstrap.css'
 import './App.css'
 
+import Socket from '../../socket'
+
 import ChannelSection from './channels/ChannelSection'
 import UserSection from './users/UserSection'
 import MessageSection from './messages/MessageSection'
@@ -14,79 +16,83 @@ const App = () => {
   const [messages, setMessages] = useState([])
   const [connected, setConnected] = useState(false)
 
-  const ws = useRef(null)
+  const socket = useRef(null)
 
   const handleAddChannel = (name) => {
-    const message = {
-      name: 'add-channel',
-      data: {
-        id: channels.length,
-        name
-      }
-    }
-
-    ws.current.send(JSON.stringify(message))
+    socket.current.emit('channel-add', { name })
   }
 
   const handleSetActiveChannel = (activeChannel) => {
     setActiveChannel(activeChannel)
-    // TODO: get channel messages
+
+    socket.current.emit('message-unsubscribe')
+    setUsers([])
+
+    socket.current.emit('message-subscribe', { channelId: activeChannel.id })
   }
 
-  const handleAddUser = (name) => {
-    const newUser = {
-      id: users.length,
-      name
-    }
-
-    setUsers(oldState => [...oldState, newUser])
-    // TODO: send to server
+  const handleEditUser = (name) => {
+    socket.current.emit('user-edit', { name })
   }
 
   const handleAddMessage = (body) => {
-    const author = users.length > 0 ? users[0].name : 'anonymous'
-
-    const newMessage = {
-      id: messages.length,
-      author,
-      body,
-      createdAt: new Date
-    }
-
-    setMessages(oldState => [...oldState, newMessage])
-    // TODO: send to server
+    socket.current.emit('message-add', { channelId: activeChannel.id, body })
   }
 
-  const newChannel = (channel) => {
+  const onConnect = () => {
+    setConnected(true)
+
+    socket.current.emit('channel-subscribe')
+    socket.current.emit('user-subscribe')
+  }
+
+  const onDisconnect = () => {
+    setConnected(false)
+  }
+
+  const onAddChannel = (channel) => {
     setChannels(oldState => [...oldState, channel])
   }
 
-  const handleOnMessage = (event) => {
-    try {
-      const parsedEvent = JSON.parse(event.data)
+  const onAddUser = (user) => {
+    setUsers(oldState => [...oldState, user])
+  }
 
-      if (parsedEvent.name === 'add-channel') {
-        newChannel(parsedEvent.data)
-      }
-    } catch (err) {}
+  const onEditUser = (editUser) => {
+    const updatedUsers = users.map(user => ({ ...user }))
+    const foundUser = updatedUsers.find(user => user.id === editUser.id)
+
+    if (!foundUser) {
+      setUsers([...updatedUsers, editUser])
+
+    } else {
+      foundUser.name = editUser.name
+
+      setUsers(updatedUsers)
+    }
+  }
+
+  const onRemoveUser = (removeUser) => {
+    setUsers(users.filter(user => user.id !== removeUser.id))
+  }
+
+  const onAddMessage = (message) => {
+    setMessages(oldState => [...oldState, message])
   }
 
   useEffect(() => {
-    ws.current = new WebSocket('ws://localhost:8081')
+    socket.current = new Socket()
 
-    ws.current.onopen = (event) => {
-      setConnected(true)
-    }
+    socket.current.on('connect', onConnect)
+    socket.current.on('disconnect', onDisconnect)
 
-    ws.current.onmessage = (event) => {
-      handleOnMessage(event)
-    }
+    socket.current.on('channel-add', onAddChannel)
 
-    ws.current.onclose = (event) => {
-      setConnected(false)
-    }
+    socket.current.on('user-add', onAddUser)
+    socket.current.on('user-edit', onEditUser)
+    socket.current.on('user-remove', onRemoveUser)
 
-    return () => ws.current.close()
+    socket.current.on('message-add', onAddMessage)
   }, [])
 
   return (
@@ -100,7 +106,7 @@ const App = () => {
         />
         <UserSection
           users={users}
-          addUser={handleAddUser}
+          editUser={handleEditUser}
         />
       </div>
       <div className='content'>

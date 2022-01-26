@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 
-const UserForm = ({ addUser }) => {
+const UserForm = ({ editUser }) => {
   const [user, setUser] = useState('')
 
   const handleSubmit = (event) => {
     event.preventDefault()
 
-    addUser(user)
+    editUser(user)
 
     event.target.reset()
   }
