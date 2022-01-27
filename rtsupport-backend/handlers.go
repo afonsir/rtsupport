@@ -75,3 +75,27 @@ func subscribeChannel(client *Client, data interface{}) {
 func unsubscribeChannel(client *Client, data interface{}) {
 	client.StopForKey(ChannelStop)
 }
+
+func editUser(client *Client, data interface{}) {
+	var user User
+
+	err := mapstructure.Decode(data, &user)
+
+	if err != nil {
+		client.send <- Message{"error", err.Error()}
+		return
+	}
+
+	client.userName = user.Name
+
+	go func() {
+		_, err := r.Table("users").
+			Get(client.id).
+			Update(user).
+			RunWrite(client.session)
+
+		if err != nil {
+			client.send <- Message{"error", err.Error()}
+		}
+	}()
+}
