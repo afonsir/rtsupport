@@ -205,7 +205,7 @@ func changeFeedHelper(cursor *r.Cursor, changeEventName string,
 
 			} else if val.NewValue != nil && val.OldValue != nil {
 				eventName = changeEventName + "-" + "edit"
-				data = val.OldValue
+				data = val.NewValue
 			}
 
 			send <- Message{eventName, data}

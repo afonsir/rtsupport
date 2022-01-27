@@ -65,6 +65,8 @@ func (client *Client) Close() {
 		ch <- true
 	}
 	close(client.send)
+	// delete user
+	r.Table("users").Get(client.id).Delete().Exec(client.session)
 }
 
 func (client *Client) Read() {
