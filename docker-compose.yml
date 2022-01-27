@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  rethinkdb:
+    image: rethinkdb:2.4-buster-slim
+    container_name: rethinkdb
+    ports:
+      - 8081:8080
+      - 28015:28015
+      - 29015:29015
+    volumes:
+      - rethinkdb-data:/data
+    command: >
+      rethinkdb
+        --bind all
+        --server-name rethinkdb-local
+        --initial-password ${DB_ADMIN_PASSWORD}
+
+volumes:
+  rethinkdb-data:
