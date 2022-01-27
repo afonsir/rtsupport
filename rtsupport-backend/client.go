@@ -31,9 +31,17 @@ func NewClient(socket *websocket.Conn, findHandler FindHandler, session *r.Sessi
 }
 
 func (client *Client) NewStopChannel(stopKey int) chan bool {
+	client.StopForKey(stopKey)
 	stop := make(chan bool)
 	client.stopChannels[stopKey] = stop
 	return stop
+}
+
+func (client *Client) StopForKey(key int) {
+	if ch, found := client.stopChannels[key]; found {
+		ch <- true
+		delete(client.stopChannels, key)
+	}
 }
 
 func (client *Client) Close() {
