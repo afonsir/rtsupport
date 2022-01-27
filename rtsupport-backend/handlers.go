@@ -162,6 +162,36 @@ func addChannelMessage(client *Client, data interface{}) {
 	}()
 }
 
+func subscribeChannelMessage(client *Client, data interface{}) {
+	go func() {
+		eventData := data.(map[string]interface{})
+
+		val, ok := eventData["channelId"]
+		if !ok {
+			return
+		}
+
+		channelId, ok := val.(string)
+		if !ok {
+			return
+		}
+
+		stop := client.NewStopChannel(MessageStop)
+		cursor, err := r.Table("messages").
+			OrderBy(r.OrderByOpts{Index: r.Desc("createdAt")}).
+			Filter(r.Row.Field("channelId").Eq(channelId)).
+			Changes(r.ChangesOpts{IncludeInitial: true}).
+			Run(client.session)
+
+		if err != nil {
+			client.send <- Message{"error", err.Error()}
+			return
+		}
+
+		changeFeedHelper(cursor, "message", client.send, stop)
+	}()
+}
+
 func changeFeedHelper(cursor *r.Cursor, changeEventName string,
 	send chan<- Message, stop <-chan bool) {
 
