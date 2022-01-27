@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -13,6 +12,11 @@ const (
 	UserStop
 	MessageStop
 )
+
+type Message struct {
+	Name string      `json:"name"`
+	Data interface{} `json:"data"`
+}
 
 type Channel struct {
 	Id   string `json:"id"   rethinkdb:"id,omitempty"`
@@ -54,40 +58,19 @@ func addChannel(client *Client, data interface{}) {
 }
 
 func subscribeChannel(client *Client, data interface{}) {
-	stop := client.NewStopChannel(ChannelStop)
-	result := make(chan r.ChangeResponse)
-
-	cursor, err := r.Table("channels").
-		Changes(r.ChangesOpts{IncludeInitial: true}).
-		Run(client.session)
-
-	if err != nil {
-		client.send <- Message{"error", err.Error()}
-		return
-	}
-
 	go func() {
-		var change r.ChangeResponse
-		for cursor.Next(&change) {
-			result <- change
-		}
-	}()
+		stop := client.NewStopChannel(ChannelStop)
 
-	go func() {
-		for {
-			select {
-			case <-stop:
-				cursor.Close()
-				return
+		cursor, err := r.Table("channels").
+			Changes(r.ChangesOpts{IncludeInitial: true}).
+			Run(client.session)
 
-			case change := <-result:
-				// insert
-				if change.NewValue != nil && change.OldValue == nil {
-					client.send <- Message{"channel-add", change.NewValue}
-					fmt.Println("channel added")
-				}
-			}
+		if err != nil {
+			client.send <- Message{"error", err.Error()}
+			return
 		}
+
+		changeFeedHelper(cursor, "channel", client.send, stop)
 	}()
 }
 

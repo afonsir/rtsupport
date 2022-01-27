@@ -7,11 +7,6 @@ import (
 	r "gopkg.in/rethinkdb/rethinkdb-go.v6"
 )
 
-type Message struct {
-	Name string      `json:"name"`
-	Data interface{} `json:"data"`
-}
-
 type FindHandler func(string) (Handler, bool)
 
 type Client struct {
