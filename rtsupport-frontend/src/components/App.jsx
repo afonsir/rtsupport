@@ -81,7 +81,9 @@ const App = () => {
   }
 
   useEffect(() => {
-    socket.current = new Socket()
+    const ws = new WebSocket('ws://localhost:4000')
+
+    socket.current = new Socket(ws)
 
     socket.current.on('connect', onConnect)
     socket.current.on('disconnect', onDisconnect)
