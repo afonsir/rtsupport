@@ -192,6 +192,10 @@ func subscribeChannelMessage(client *Client, data interface{}) {
 	}()
 }
 
+func unsubscribeChannelMessage(client *Client, data interface{}) {
+	client.StopForKey(MessageStop)
+}
+
 func changeFeedHelper(cursor *r.Cursor, changeEventName string,
 	send chan<- Message, stop <-chan bool) {
 
