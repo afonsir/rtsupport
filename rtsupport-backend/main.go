@@ -7,16 +7,6 @@ import (
 	r "gopkg.in/rethinkdb/rethinkdb-go.v6"
 )
 
-type Channel struct {
-	Id   string `json:"id"   rethinkdb:"id,omitempty"`
-	Name string `json:"name" rethinkdb:"name"`
-}
-
-type User struct {
-	Id   string `rethinkdb:"id,omitempty"`
-	Name string `rethinkdb:"name"`
-}
-
 func main() {
 	session, err := r.Connect(r.ConnectOpts{
 		Address:  "localhost:28015",
@@ -38,6 +28,8 @@ func main() {
 	router.Handle("user-edit", editUser)
 	router.Handle("user-subscribe", subscribeUser)
 	router.Handle("user-unsubscribe", unsubscribeUser)
+
+	router.Handle("message-add", addChannelMessage)
 
 	http.Handle("/", router)
 	http.ListenAndServe(":4000", nil)

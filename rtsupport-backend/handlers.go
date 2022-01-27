@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	r "gopkg.in/rethinkdb/rethinkdb-go.v6"
@@ -12,6 +13,24 @@ const (
 	UserStop
 	MessageStop
 )
+
+type Channel struct {
+	Id   string `json:"id"   rethinkdb:"id,omitempty"`
+	Name string `json:"name" rethinkdb:"name"`
+}
+
+type User struct {
+	Id   string `rethinkdb:"id,omitempty"`
+	Name string `rethinkdb:"name"`
+}
+
+type ChannelMessage struct {
+	Id        string    `rethinkdb:"id,omitempty"`
+	ChannelId string    `rethinkdb:"channelId"`
+	Body      string    `rethinkdb:"body"`
+	Author    string    `rethinkdb:"author"`
+	CreatedAt time.Time `rethinkdb:"createdAt"`
+}
 
 func addChannel(client *Client, data interface{}) {
 	var channel Channel
@@ -118,6 +137,29 @@ func subscribeUser(client *Client, data interface{}) {
 
 func unsubscribeUser(client *Client, data interface{}) {
 	client.StopForKey(UserStop)
+}
+
+func addChannelMessage(client *Client, data interface{}) {
+	var channelMessage ChannelMessage
+
+	err := mapstructure.Decode(data, &channelMessage)
+
+	if err != nil {
+		client.send <- Message{"error", err.Error()}
+	}
+
+	go func() {
+		channelMessage.CreatedAt = time.Now()
+		channelMessage.Author = client.userName
+
+		err := r.Table("messages").
+			Insert(channelMessage).
+			Exec(client.session)
+
+		if err != nil {
+			client.send <- Message{"error", err.Error()}
+		}
+	}()
 }
 
 func changeFeedHelper(cursor *r.Cursor, changeEventName string,
