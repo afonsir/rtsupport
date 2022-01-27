@@ -116,6 +116,10 @@ func subscribeUser(client *Client, data interface{}) {
 	}()
 }
 
+func unsubscribeUser(client *Client, data interface{}) {
+	client.StopForKey(UserStop)
+}
+
 func changeFeedHelper(cursor *r.Cursor, changeEventName string,
 	send chan<- Message, stop <-chan bool) {
 
