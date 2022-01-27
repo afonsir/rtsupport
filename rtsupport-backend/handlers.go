@@ -99,3 +99,53 @@ func editUser(client *Client, data interface{}) {
 		}
 	}()
 }
+
+func subscribeUser(client *Client, data interface{}) {
+	go func() {
+		stop := client.NewStopChannel(UserStop)
+
+		cursor, err := r.Table("users").
+			Changes(r.ChangesOpts{IncludeInitial: true}).
+			Run(client.session)
+
+		if err != nil {
+			client.send <- Message{"error", err.Error()}
+		}
+
+		changeFeedHelper(cursor, "user", client.send, stop)
+	}()
+}
+
+func changeFeedHelper(cursor *r.Cursor, changeEventName string,
+	send chan<- Message, stop <-chan bool) {
+
+	change := make(chan r.ChangeResponse)
+	cursor.Listen(change)
+
+	for {
+		eventName := ""
+		var data interface{}
+
+		select {
+		case <-stop:
+			cursor.Close()
+			return
+
+		case val := <-change:
+			if val.NewValue != nil && val.OldValue == nil {
+				eventName = changeEventName + "-" + "add"
+				data = val.NewValue
+
+			} else if val.NewValue == nil && val.OldValue != nil {
+				eventName = changeEventName + "-" + "remove"
+				data = val.OldValue
+
+			} else if val.NewValue != nil && val.OldValue != nil {
+				eventName = changeEventName + "-" + "edit"
+				data = val.OldValue
+			}
+
+			send <- Message{eventName, data}
+		}
+	}
+}

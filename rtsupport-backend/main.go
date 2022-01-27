@@ -36,6 +36,7 @@ func main() {
 	router.Handle("channel-unsubscribe", unsubscribeChannel)
 
 	router.Handle("user-edit", editUser)
+	router.Handle("user-subscribe", subscribeUser)
 
 	http.Handle("/", router)
 	http.ListenAndServe(":4000", nil)
